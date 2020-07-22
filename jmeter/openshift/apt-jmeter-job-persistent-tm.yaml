@@ -1,0 +1,118 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  labels:
+    app: apt-jmeter
+  name: apt-jmeter-job
+objects:
+  - apiVersion: batch/v1
+    kind: Job
+    metadata:
+      labels:
+        app: apt-jmeter
+      name: apt-jmeter
+    spec:
+      parallelism: 1
+      completions: 1
+      template:
+        metadata:
+          name: apt-jmeter
+          labels:
+            testplan: apt-jmx
+        spec:
+          containers:
+          - name: jmeter
+            image: docker-registry.default.svc:5000/${NAMESPACE}/apt-jmeter:latest
+            resources:
+              requests:
+                cpu: '500m'
+                memory: 1Gi
+            env:
+              - name: J_JKS_PWD
+                valueFrom:
+                  secretKeyRef:
+                    name: ${JKS_SECRET}
+                    key: J_JKS_PWD
+              - name: J_JKS_LOCATION
+                value: ${J_JKS_LOCATION}
+              - name: J_PAIN_TEMPLATE_LOCATION
+                value: /opt/jmeter/tests/pain_template.xml
+              - name: J_PAIN_CSV_LOCATION
+                value: /opt/jmeter/tests/pain_samples.csv
+              - name: J_sample_variables
+                value: "MSG_ID,JMS_TIMESTAMP"
+              - name: J_BROKER
+                value: messaging
+              - name: J_PORT
+                value: 5671
+              - name: J_INFLUXDB_SERVER
+                value: 'influxdb-1x'
+              - name: J_INFLUXDB_PORT
+                value: '8086'
+              - name: JAEGER_SERVICE_NAME
+                value: jmeter
+              - name: JAEGER_SAMPLER_PARAM
+                value: '1'
+              - name: JAEGER_PROPAGATION
+                value: 'jaeger,b3'
+              - name: RESULT_SUB_DIR
+                value: ${RESULT_SUB_DIR}
+              - name: CALLBACK_URL
+                value: ${CALLBACK_URL}
+            volumeMounts:
+              - mountPath: /opt/jmeter/tests
+                name: tests
+              - mountPath: /opt/jmeter/results
+                name: results
+              - mountPath: /opt/certificates
+                name: jks
+          - args:
+            - '--collector.host-port=jaeger-collector.perftest.svc:14267'
+            image: jaegertracing/jaeger-agent
+            imagePullPolicy: Always
+            name: jaeger-agent
+            ports:
+              - containerPort: 5775
+                protocol: UDP
+              - containerPort: 5778
+                protocol: TCP
+              - containerPort: 6831
+                protocol: UDP
+              - containerPort: 6832
+                protocol: UDP
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+          restartPolicy: OnFailure
+          volumes:
+            - name: "results"
+              persistentVolumeClaim:
+                claimName: ${JTL_PVC}
+            - configMap:
+                defaultMode: 420
+                name: ${JMX_CONFIGMAP}
+              name: tests
+            - name: jks
+              secret:
+                defaultMode: 420
+                secretName: ${JKS_SECRET}
+parameters:
+  - description: Namespace/project the job is created in
+    name: NAMESPACE
+    value: perftest
+  - description: Name of the ConfigMap containing the test(s) to run
+    name: JMX_CONFIGMAP
+    value: apt-jmx
+  - description: Name of the secret containing the jks
+    name: JKS_SECRET
+    value: broker-jks
+  - description: Jks location
+    name: J_JKS_LOCATION
+    value: /opt/certificates/amqp.jks
+  - description: Name of the persistent volume claim to use for storing the test(s) results
+    name: JTL_PVC
+    value: apt-jmeter
+  - description: Name of the subdirectory where test results are to be stored 
+    name: RESULT_SUB_DIR
+  - description: Url for notification of test completion 
+    name: CALLBACK_URL

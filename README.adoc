@@ -1,0 +1,28 @@
+= Overview
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+ifndef::env-github[]
+:imagesdir: ./
+endif::[]
+:toc:
+:toc-placement!:
+
+This repository aims to demonstrate how OpenShift and other tools can be leveraged to automate performance tests.
+
+The current setup covers components that communicate asynchronously through a message broker.
+
+This was tested with OpenShift 3.9 and 3.10 but may work with other versions as well.
+
+Details and instructions on the different aspects can be found here:
+
+* <<./enmasse/README.adoc#,EnMasse broker>>
+* <<./camel-amq-fakeapp/README.adoc#,Fake application>>
+* <<./jmeter/README.adoc#,JMeter>>
+* <<./jenkins/README.adoc#,Automation with Jenkins>>
+* <<./observability/README.adoc#,Observability>>
+

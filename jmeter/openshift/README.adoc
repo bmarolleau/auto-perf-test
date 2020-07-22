@@ -1,0 +1,60 @@
+= JMeter deployment on OpenShift
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+ifndef::env-github[]
+:imagesdir: ./
+endif::[]
+:toc:
+:toc-placement!:
+
+
+After <<../container/README.adoc#,a JMeter image>> has been created you can run your test plan in a container. Therefore <<../examples/README.adoc#,an example>> has been provided, which is used for demonstrating the approach.
+The few generic steps are described here. The ones specific to the test plan provided as example are described there.
+
+== Test plan
+
+A configMap is used for injecting the test plan into the image. From the directory where your jmx file is located you can create the configMap with a single command.
+
+ $ oc create configmap apt-jmx --from-file=jms-code.jmx --from-file=pain_samples.csv --from-file=pain_template.xml
+
+A label can also be added to the config
+
+ $ oc label configMap apt-jmx job-name=apt-jmeter
+
+This configMap has been exported and stored for reuse by Jenkins (it could also be recreated each time from files)
+
+ $ oc export configMap apt-jmx > ../openshift/apt-jmx-cm.yaml
+
+== JMeter properties
+
+https://jmeter.apache.org/usermanual/properties_reference.html[Prorperties] allow to customize JMeter. Interesting for our purpose is for instance the possibility to customize the result file. They are two ways of setting properties, the first one is to inject a user.properties file. The second one is to pass them as command line argument with -J, example: -Jproperty_example=property_value. The values then overwrite what has been defined in jmeter.properties or reportgenerator.properties. To facilitate this second approach the run script transforms any environment variable with the J_ prefix to a command line argument. For instance the environment variable J_myprop will be passed as the parameter -Jmyprop. 
+
+== Certificates and credentials
+
+Very similar to the test plan certificates can be injected into the container. A secret may be used for this purpose rather than a configMap. A java keystore containing the broker certificates has been created in the <<../../enmasse/README.adoc#,EnMasse section>>. A password is also necessary to access the keystore and may be provided as environment variable. Both can be injected with a single secret running the following command in the same directory that was used for the creation of the java keystore.
+
+ $ oc create secret generic broker-jks --from-literal=J_JKS_PWD=xxxxxx --from-file=./amqp-certs/amqp.jks
+
+== Run
+
+As we want our test plan to be run and terminate at the end a job is better suited for the purpose than a deployment configuration. A template containing the job definition may also be used to pass parameters. An example is available in this directory. The template can be processed with this command to create a new job.
+
+ $ oc process -f apt-jmeter-job-tm.yaml | oc create -f -
+
+If you want to replace it with a new version you can use the follwing.
+
+ $ oc process -f apt-jmeter-job-tm.yaml | oc replace --force -f -
+
+It is possible to pass the namespace and name of configMap with the JMeter test suite as parameter.
+
+It may also be useful to first create the template in OpenShift, so that it can easily be called from Jenkins for instance:
+
+ $ oc create -f apt-jmeter-job-tm.yaml
+
+Another template apt-jmeter-job-persistent-tm.yaml allows to mount a persistent volume instead of emptyDir for storing the test results. An additional parameter allows the specification of the PVC name.
+This is useful when the test results are to be read after the job has terminated, from Jenkins for instance.
