@@ -21,7 +21,7 @@ metadata:
     openshift.io/support-url: https://access.redhat.com
     tags: instant-app,jenkins
   creationTimestamp: null
-  name: jenkins-persistent
+  name: jenkins-persistent-perf
 objects:
 - apiVersion: v1
   kind: Route
