@@ -141,7 +141,7 @@ pipeline {
                     }
                     // The test results are available on a shared drive mounted by Jenkins
                     perfReport "/opt/performances/${JOB_NAME}/${BUILD_NUMBER}/*.jtl"
-                    // perfReport sourceDataFiles: "/opt/performances/${JOB_NAME}/${BUILD_NUMBER}/*.jtl", compareBuildPrevious: true, modePerformancePerTestCase: true, modeOfThreshold: true, relativeFailedThresholdPositive: 50, relativeUnstableThresholdNegative: 40, relativeUnstableThresholdPositive: 40
+                     perfReport sourceDataFiles: "/opt/performances/${JOB_NAME}/${BUILD_NUMBER}/*.jtl", compareBuildPrevious: true, modePerformancePerTestCase: true, modeOfThreshold: true, relativeFailedThresholdPositive: 50, relativeUnstableThresholdNegative: 40, relativeUnstableThresholdPositive: 40
                     // Job delete required due to the jaeger-agent sidecar not terminating
                     openshift.selector('job', ['testplan': testPlanName]).delete()
                     echo "Tests completed"
