@@ -1,5 +1,5 @@
 // These could also be passed as parameters
-def testPlanPath = 'https://raw.githubusercontent.com/bmarolleau/auto-perf-test/master/jmeter/openshift/apt-jmx-cm.yaml' 
+def testPlanPath = 'https://raw.githubusercontent.com/fgiloux/auto-perf-test/master/jmeter/openshift/apt-jmx-cm.yaml' 
 def testPlanName = 'apt-jmx' 
 pipeline {
   agent {
@@ -105,8 +105,8 @@ pipeline {
                     //         - TODO: Creation of configMap with application properties
                     /* def dc = openshift.selector("dc", 'camel-amq-fakeapp').rollout()
                     timeout(5) { 
-                  // BM     openshift.selector("dc", 'camel-amq-fakeapp').related('pods').untilEach(1) {
-                   // BM        return (it.object().status.phase == "Running")
+                        openshift.selector("dc", 'camel-amq-fakeapp').related('pods').untilEach(1) {
+                            return (it.object().status.phase == "Running")
                         }
                     } */
                 }
@@ -156,7 +156,7 @@ pipeline {
         script {
             openshift.withCluster() {
                 openshift.withProject() {
-                 // BM openshift.tag("camel-amq-fakeapp:latest", "camel-amq-fakeapp:staging") 
+                  openshift.tag("camel-amq-fakeapp:latest", "camel-amq-fakeapp:staging") 
                 }
             }
         }
