@@ -134,8 +134,8 @@ pipeline {
                           o.metadata.labels['testplan'] = testPlanName
                     }
                     def created = openshift.create(models)
-                    // Block and wait for test completion up to 10mns
-                    timeout(10) {
+                    // Block and wait for test completion up to 20mns
+                    timeout(20) {
                         print "Waiting for tests to complete..."
                         waitForWebhook hook
                     }
